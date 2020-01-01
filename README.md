@@ -16,7 +16,7 @@ Load the world trade network adjency matrix and node labels from Della Rossa et 
 
 ```r
 DATADIR <- '' # set your data directory
-wtn <- read.csv(file.path(DATADIR, "wtn.csv"), header = FALSE)
+wtn <- read.csv(file.path(DATADIR, "wtn_lscc.csv"), header = FALSE)
 wtn <- as.matrix(wtn)
 ```
 
@@ -36,4 +36,31 @@ library(igraph)
 library(pracma)
 ```
 
-Calculate the core-periphery profile of the world trade network and the 
+Calculate the core-periphery profile and the core-periphery centralization C of the world trade network:
+
+```r
+cp_wtn <- cpProfile(net.object = wtn, directed = TRUE)
+```
+
+Obtain the cp-centralizaion C:
+
+```r
+> cp_wtn[["C"]]
+[1] 0.819075
+```
+
+Now plot the core-periphery profile:
+
+```r
+library(reshape2)
+library(ggplot2)
+
+plot_dat <- cp_wtn[["alpha"]]
+plot_dat <- plot_dat[order(plot_dat$alpha), ]
+N <- dim(wtn)[1]
+plot_dat$N <- 1:N
+plot_dat$baseline <- (0:(N-1))/(N-1)
+plot_dat <- melt(plot_dat, id.vars =  c("N", "node_label"))
+
+
+```
