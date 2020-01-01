@@ -40,7 +40,7 @@ Calculate the core-periphery profile and the core-periphery centralization C of 
 cp_wtn <- cpProfile(net.object = wtn, directed = TRUE)
 ```
 
-Obtain the cp-centralizaion C:
+Obtain the cp-centralizaion C of the world trade network:
 
 ```r
 > cp_wtn[["C"]]
@@ -50,7 +50,7 @@ Obtain the cp-centralizaion C:
 Top nodes based on coreness (alpha_k):
 
 ```r
-> coreness <- cp_object[["alpha"]]
+> coreness <- cp_wtn[["alpha"]]
 > coreness <- coreness[order(coreness$alpha, decreasing = TRUE), ]
 > head(coreness)
 
