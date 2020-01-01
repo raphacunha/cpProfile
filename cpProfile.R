@@ -175,9 +175,8 @@ cpProfile <- function(net.object, directed = NULL) {
   }
   
   # return list with alpha_i and C 
-  cpProfile <- list(alpha = alpha, C = C)
-  
-  return(cpProfile)
+  cp_profile <- list(alpha = alpha, C = C)
+  return(cp_profile)
   }
 
 
