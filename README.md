@@ -18,6 +18,22 @@ Load the world trade network adjency matrix and node labels from Della Rossa et 
 DATADIR <- '' # set your data directory
 wtn <- read.csv(file.path(DATADIR, "wtn.csv"), header = FALSE)
 wtn <- as.matrix(wtn)
+```
+
+Load node labels (optional):
+
+```r
 labels <- read.table(file.path(DATADIR, "labels.txt"), header = TRUE)
 row.names(wtn) <- labels$labels
+```
+
+Load required packages:
+
 ```r
+library(Matrix)
+library(network)
+library(igraph)
+library(pracma)
+```
+
+Calculate the core-periphery profile of the world trade network and the 
