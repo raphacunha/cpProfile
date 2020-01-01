@@ -77,5 +77,5 @@ p
 
 Which should produce a cp profile plot like this:
 
-<img src="../cp_wtn.pdf" width="30%">
+<img src="../cp_wtn.png" width="80%">
 
