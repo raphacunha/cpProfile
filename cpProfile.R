@@ -1,52 +1,24 @@
-# set wd
-setwd("Z:/sandbox/cpProfile/")
-matlab.script <- dir()[grep("\\.m", dir())]
+#' ---
+#' 
+#' cpProfile implements the core-periphery profile for networks as developed in:
+#' 
+#' Della Rossa, F., Dercole, F., & Piccardi, C. 2013. "Profiling core-periphery network
+#' structure by random walkers." Scientific Reports, 3, 1467. DOI: 10.1038/srep01467
+#' 
+#' Original code in Matlab provided by the authors at:
+#' http://home.deib.polimi.it/piccardi/PCPNSbyRW.html
+#' 
+#' ---
 
-# load function 
-library(matconv)
-cp_R <-mat2r(matlab.script)
-str(cp_R)
-
-# save to text file
-file.create("cp_R2.R")
-fileConn <- file("cp_R2.R")
-writeLines(cp_R$rCode, fileConn)
-close(fileConn)
-file.show("cp_R2.R")
-
-# create dummy data to test translated snipets
-dummy.mat <- matrix(2,length(LETTERS),length(LETTERS),dimnames=list(LETTERS,LETTERS))
-dummy.mat2 <- Matrix::Matrix(dummy.mat)
-dummy.g <- igraph::graph.adjacency(dummy.mat)
-dummy.net <- intergraph::asNetwork(dummy.g)
-net.object <- dummy.net
-
-
-# set directories
-ROOTDIR <- "~/Github/cpProfile"
-
-# load world trade network as example
-wtn <- read.csv(file.path(ROOTDIR, "wtn.csv"),
-                header = FALSE)
-net.object <- as.matrix(wtn)
-labels <- read.table(file.path(ROOTDIR, "labels.txt"), header = TRUE)
-row.names(net.object) <- labels$labels
-directed <- T
-
-###
-### START CODE
-###
 
 # load required packages
 require(Matrix)
 require(network)
-require(lattice)
 require(igraph)
-require(intergraph)
 require(pracma)
 
-# matlab translated code
-cpProfile <- function(net.object, directed = NULL) {   # leave function closed until translation is completed
+
+cpProfile <- function(net.object, directed = NULL) {
   
   # create netname from matrix, igraph, or network objects and assign labels
   if(class(net.object) %in% c("matrix", "dsyMatrix", "dscMatrix", "dsparseMatrix", "dsRMatrix", "dtCMatrix", "dtpMatrix", "dtRMatrix", "dtrMatrix")) { 
@@ -78,22 +50,25 @@ cpProfile <- function(net.object, directed = NULL) {   # leave function closed u
   
   # calculate algorithm metrics
   A <- netname
-  k_in <- colSums(A)                # row vector of node in-weights (or in-degrees)
-  k_out <- rowSums(A)               # column vector of node out-weights (or out-degrees)
-  k_tot <- k_out + k_in             # total degree (or twice the degree, if undirected)
-  m <- sum(k_in)                    # total weight (or total number of links) in the network
-  N <- length(k_in)                 # number of nodes
-  Abin <- as.logical(A)             # binary adjacency matrix
-  #if(directed == T) {directed <- 1} # use info for directed network
-  #if(directed == F) {directed <- 0} # use info for undirected network
+  k_in <- colSums(A)                    # row vector of node in-weights (or in-degrees)
+  k_out <- rowSums(A)                   # column vector of node out-weights (or out-degrees)
+  k_tot <- k_out + k_in                 # total degree (or twice the degree, if undirected)
+  m <- sum(k_in)                        # total weight (or total number of links) in the network
+  N <- length(k_in)                     # number of nodes
+  Abin <- as.logical(A)                 # binary adjacency matrix
+  
   if(is.null(directed)) {
     if(any(rowSums(A) == colSums(A))) {
-      directed <- 0 }           # identify undirected network
+      directed <- 0 }                   # identify undirected network
     else {
-      directed <- 1 }           # identify directed network
-  }
-  if(any(A > 1)) { weighted <- 1 }  # identify weighted networks
-  if(!any(A > 1)) { weighted <- 0}  # identify weighted networks
+      directed <- 1 }                   # identify directed network
+    }
+  else {
+    if(directed == T) { directed <- 1 } # use info for directed network
+    if(directed == F) { directed <- 0 } # use info for undirected network}
+    } 
+  if(any(A > 1)) { weighted <- 1 }      # identify weighted networks
+  if(!any(A > 1)) { weighted <- 0 }     # identify weighted networks
   
   # compute Markov matrix
   cat("Computing the Markov matrix\n\n")
@@ -113,7 +88,7 @@ cpProfile <- function(net.object, directed = NULL) {   # leave function closed u
     AAA[N,] <- 1
     bbb <- matrix(0, N, 1)
     bbb[N] <- 1
-    x <- pracma::mldivide(AAA, bbb) # mldivide(A, B) corresponds to A\B in Matlab notation
+    x <- pracma::mldivide(AAA, bbb) # mldivide(A,B) is A\B in Matlab notation
     rownames(x) <- labels
   } else { x = k_in/sum(k_in) }
   
@@ -123,11 +98,11 @@ cpProfile <- function(net.object, directed = NULL) {   # leave function closed u
   A <- as.matrix(A)
   
   # sorting nodes according to total degree
-  if(class(labels) %in% c("integer", "numeric")){
+  if(class(labels) %in% c("integer", "numeric")) {
     L <- sort(k_in + k_out)
     nodelist <- as.numeric(names(L))
   }
-  if(class(labels) == "character"){
+  if(class(labels) == "character") {
     L <- k_in + k_out
     names(L) <- 1:N
     L <- sort(L)
@@ -144,21 +119,21 @@ cpProfile <- function(net.object, directed = NULL) {   # leave function closed u
   alpha_tmp <- matrix(0, 1, N)
   
   # at each cycle, introducing the node that yields the
-  # smallest increase in the pers.prob. of the periphery
+  # smallest increase in the pers. prob. of the periphery
   x_sum <- sum(x[periph])
   xP_sum <- sum(sum(xP[periph,periph]))
   #s_sum <- k_out[periph]
   #w_sum <- 0
   
-  for (i in 2:(N-1)){
+  for (i in 2:(N-1)) {
     
-    if (pracma::rem(i,100) == 0){
+    if (pracma::rem(i,100) == 0) {
       cat(paste('...adding node', as.character(i), 'of', as.character(N)))
     }
     
     utest <- matrix(0, 1, length(core))
     
-    for (j in 1:length(core)){
+    for (j in 1:length(core)) {
       # computing the pers. prob. if node j is adedd to periphery
       utest[j] <- (xP_sum +
                      sum(xP[core[j],periph]) +
@@ -169,7 +144,6 @@ cpProfile <- function(net.object, directed = NULL) {   # leave function closed u
     colnames(utest) <- 1:ncol(utest)
     uuu <- utest[,order(utest[1,])]
     jjj <- as.numeric(names(uuu))
-    
     alpha_tmp[i] <- uuu[1]
     
     # among the core nodes yielding minimal increase in the pers. prob.,
@@ -186,8 +160,7 @@ cpProfile <- function(net.object, directed = NULL) {   # leave function closed u
     core <- setdiff(1:N, periph)
     x_sum <- sum(x[periph])
     xP_sum <- sum(sum(xP[periph,periph]))
-    
-  }
+    }
   
   # final step: the current periphery eventually includes the whole network
   alpha_tmp[N] <- 1
@@ -200,76 +173,15 @@ cpProfile <- function(net.object, directed = NULL) {   # leave function closed u
   alpha <- data.frame(alpha = rep(NA, N),
                       node_label = rep(NA, N))
   
-  for (i in 1:N){
+  for (i in 1:N) {
     alpha[i,"alpha"] <- alpha_tmp[i]
     alpha[i,"node_label"] <- as.character(labels[periph[i]])
   }
   
   # return list with alpha_i and C 
-  cpProfile <- list(alpha = alpha,
-                    C = C)
-  return(cpProfile)
+  cpProfile <- list(alpha = alpha, C = C)
   
-}
-
-cp_object <- cpProfile(net.object = net.object)
-
-alpha[order(alpha$alpha), ]
-
-
-# plot
-
-require(reshape2)
-
-alpha_plot <- cp_object[["alpha"]]
-alpha_plot <- alpha_plot[order(alpha_plot$alpha), ]
-alpha_plot$N <- 1:N
-alpha_plot$baseline <- (0:(N-1))/(N-1)
-alpha_plot <- melt(alpha_plot, id.vars =  c("N", "node_label"))
-
-require(ggplot2)
-
-p <- ggplot(alpha_plot, aes(x = N, y = value,
-                            group = variable,
-                            colour = variable,
-                            shape = variable)) +
-  geom_line() +
-  geom_point() +
-  scale_colour_manual(values = c("red", "black")) +
-  scale_shape_manual(values = c(19, NA)) +
-  scale_x_continuous(expand = c(0,0)) +
-  scale_y_continuous(expand = c(0,0)) +
-  theme_bw(base_family = "Myriad Pro") +
-  theme(legend.position = "none",
-        panel.grid.minor = element_blank()) +
-  labs(y = expression("Core-periphery profile"~alpha[k]),
-       x = expression("Number of nodes of"~P[k])) +
-  NULL
-p
-
-plot(k_tot,alpha[,1])
-
-
-disp(['CPU time (main cycle only) [sec] <- ',num2str(ttt)])
-disp([' '])
-disp(['Press a key to display node coreness...'])
-pause
-disp(['rank     node label     id     coreness alpha_k'])
-for (i in N:-1:1){
-    #     disp([int2str(N-i+1),'   ',char(labels(periph(i))),'   ',char(idc(periph(i))),'   ',num2str(alpha_tmp(i))])
-    disp([int2str(N-i+1),'   ',char(labels(periph(i))),'   ',num2str(alpha_tmp(i))])
-}
-disp(['rank     node label     coreness alpha_k'])
-
-#saving the whole workspace
-save(strcat('WksCP_',netname,'.mat'))
-
-figure
-plot(k_in,alpha,'o')
-
-
-}
-
-
+  return(cpProfile)
+  }
 
 
