@@ -47,7 +47,23 @@ Obtain the cp-centralizaion C:
 [1] 0.819075
 ```
 
-Now plot the core-periphery profile.
+Top nodes based on coreness (alpha_k):
+
+```r
+> coreness <- cp_object[["alpha"]]
+> coreness <- coreness[order(coreness$alpha, decreasing = TRUE), ]
+> head(coreness)
+
+        alpha            node_label
+181 1.0000000         United States
+180 0.8551008               Germany
+179 0.7548008 China, P.R.: Mainland
+178 0.6940441                France
+177 0.6392640        United Kingdom
+176 0.5991778                 Japan
+```
+
+Finally, plot the core-periphery profile:
 
 ```r
 library(reshape2)
