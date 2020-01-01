@@ -1,3 +1,4 @@
+#'
 #' cpProfile implements the core-periphery profile for networks as developed in:
 #' 
 #' Della Rossa, F., Dercole, F., & Piccardi, C. 2013. "Profiling core-periphery network
@@ -5,6 +6,7 @@
 #' 
 #' Original code in Matlab provided by the authors at:
 #' http://home.deib.polimi.it/piccardi/PCPNSbyRW.html
+#'
 
 
 # load required packages
