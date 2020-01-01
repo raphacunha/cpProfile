@@ -79,5 +79,5 @@ p
 
 Which should produce a cp profile plot like this:
 
-<img src="https://imgur.com/yNLr5Nt.png" width="30%">
+<img src="../cp_wtn.pdf" width="30%">
 
