@@ -26,11 +26,11 @@ net.object <- dummy.net
 ROOTDIR <- "~/Github/cpProfile"
 
 # load world trade network as example
-wtn <- read.csv(file.path(ROOTDIR, "wtn.csv"),
+wtn <- read.csv(file.path(ROOTDIR, "wtn_lscc.csv"),
                 header = FALSE)
-net.object <- as.matrix(wtn)
+wtn <- as.matrix(wtn)
 labels <- read.table(file.path(ROOTDIR, "labels.txt"), header = TRUE)
-row.names(net.object) <- labels$labels
+row.names(wtn) <- labels$labels
 directed <- T
 
 ###
@@ -212,9 +212,15 @@ cpProfile <- function(net.object, directed = NULL) {   # leave function closed u
   
 }
 
-cp_object <- cpProfile(net.object = net.object)
+cp_object <- cpProfile(net.object = wtn)
 
 alpha[order(alpha$alpha), ]
+
+coreness <- cp_object[["alpha"]]
+coreness <- coreness[order(coreness$alpha, decreasing = TRUE), ]
+head(coreness)
+
+tail(cp_object[["alpha"]])
 
 
 # plot
@@ -223,11 +229,30 @@ require(reshape2)
 
 alpha_plot <- cp_object[["alpha"]]
 alpha_plot <- alpha_plot[order(alpha_plot$alpha), ]
+N <- dim(wtn)[1]
 alpha_plot$N <- 1:N
-alpha_plot$baseline <- (0:(N-1))/(N-1)
+alpha_plot$id_line <- (0:(N-1))/(N-1) #identity line
 alpha_plot <- melt(alpha_plot, id.vars =  c("N", "node_label"))
 
 require(ggplot2)
+
+
+p <- ggplot(alpha_plot,
+            aes(x = N,
+                y = value,
+                group = variable,
+                colour = variable)) +
+  geom_line() +
+  scale_colour_manual(values = c("red", "black")) +
+  scale_x_continuous(expand = c(0,0)) +
+  scale_y_continuous(expand = c(0,0)) +
+  theme(legend.position = "none") +
+  labs(y = expression("Core-periphery profile"~alpha[k]),
+       x = expression("Number of nodes of"~P[k]))
+p
+
+
+
 
 p <- ggplot(alpha_plot, aes(x = N, y = value,
                             group = variable,
@@ -246,6 +271,8 @@ p <- ggplot(alpha_plot, aes(x = N, y = value,
        x = expression("Number of nodes of"~P[k])) +
   NULL
 p
+
+<img src="https://imgur.com/yNLr5Nt.png" width="30%">
 
 plot(k_tot,alpha[,1])
 
