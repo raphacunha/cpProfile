@@ -70,11 +70,11 @@ library(reshape2)
 library(ggplot2)
 
 plot_dat <- cp_wtn[["alpha"]]
-plot_dat <- plot_dat[order(plot_dat$alpha), ]
+plot_dat <- plot_dat[order(plot_dat$alpha),]
 N <- dim(wtn)[1] # number of nodes
 plot_dat$N <- 1:N
 plot_dat$id_line <- (0:(N-1))/(N-1) # identity line
-plot_dat <- melt(plot_dat, id.vars =  c("N", "node_label"))
+plot_dat <- melt(plot_dat, id.vars = c("N", "node_label"))
 
 p <- ggplot(alpha_plot,
             aes(x = N,
