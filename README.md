@@ -21,8 +21,8 @@ wtn <- as.matrix(wtn)
 Load node labels (optional):
 
 ```r
-labels <- read.table(file.path(DATADIR, "labels.txt"), header = TRUE)
-row.names(wtn) <- labels$labels
+wtn_labels <- read.table(file.path(DATADIR, "wtn_labels.txt"), header = TRUE)
+row.names(wtn) <- wtn_labels$labels
 ```
 
 Load required packages:
