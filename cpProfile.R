@@ -20,24 +20,42 @@ cpProfile <- function(net.object, directed = NULL) {
   
   # create netname from matrix, igraph, or network objects and assign labels
   if(class(net.object) %in% c("matrix", "dsyMatrix", "dscMatrix", "dsparseMatrix", "dsRMatrix", "dtCMatrix", "dtpMatrix", "dtRMatrix", "dtrMatrix")) { 
-    print("Matrix object detected. Converting to sparse Matrix format")
+    cat("Matrix object detected. Converting to sparse Matrix format\n\n")
+    # check if network is connected
+    net.object.g <- igraph::graph_from_adjacency_matrix(net.object, mode = directed, weighted = TRUE)
+    if(!igraph::is_connected(net.object.g)) { 
+      cat("Input is not a connected network. Decomposing to largest connected component\n\n")
+      net.object <- igraph::decompose(net.object.g, max.comps = 1)[[1]]
+      net.object <- igraph::get.adjacency(net.object)
+    }
     if(is.null(rownames(net.object))) { labels <- 1:nrow(net.object) }
     else { labels <- rownames(net.object) }
     netname <- Matrix::Matrix(net.object, dimnames = list(labels,labels)) }
   
   if(class(net.object) == "igraph") {
-    print("igraph object detected. Converting to sparse Matrix format")
-    try(label.value <- grep("name", igraph::list.vertex.attributes(net.object), value = T)[1])
+    cat("igraph object detected. Converting to sparse Matrix format\n\n")
+    # check if network is connected
+    if(!igraph::is_connected(net.object)) { 
+      cat("Input is not a connected network. Decomposing to largest connected component\n\n")
+      net.object <- igraph::decompose(net.object, max.comps = 1)[[1]]
+    }
+    try(label.value <- grep("name", igraph::list.vertex.attributes(net.object), value = TRUE)[1])
     if(length(label.value) == 0 | is.null(label.value)) { labels <- 1:igraph::vcount(net.object) }
     else { labels <- igraph::get.vertex.attribute(net.object, label.value) }
     netname <- Matrix::Matrix(igraph::get.adjacency(net.object), dimnames = list(labels,labels)) }
   
   if(class(net.object) == "network") {
-    print("Network object detected. Converting to sparse Matrix format")
-    try(label.value <- grep("name", network::list.vertex.attributes(net.object), value = T)[1])
+    cat("Network object detected. Converting to sparse Matrix format\n\n")
+    try(label.value <- grep("name", network::list.vertex.attributes(net.object), value = TRUE)[1])
     if(length(label.value) == 0 | is.null(label.value)) { labels <- 1:network::network.size(net.object) }
     else { labels <- network::get.vertex.attribute(net.object, label.value) }
-    netname <- Matrix::Matrix(igraph::get.adjacency(intergraph::asIgraph(net.object)), dimnames = list(labels,labels)) }
+    # check if network is connected
+    net.object <- intergraph::asIgraph(net.object)
+    if(!igraph::is_connected(net.object)) { 
+      cat("Input is not a connected network. Decomposing to largest connected component\n\n")
+      net.object <- igraph::decompose(net.object, max.comps = 1)[[1]]
+    }
+    netname <- Matrix::Matrix(igraph::get.adjacency(net.object), dimnames = list(labels,labels)) }
   
   # check if convertion was sucesscul
   if(!exists("netname")) { stop(print("cpProfile requires a matrix, network, or igraph object")) }
@@ -60,11 +78,10 @@ cpProfile <- function(net.object, directed = NULL) {
       directed <- 0 }                   # identify undirected network
     else {
       directed <- 1 }                   # identify directed network
-    }
-  else {
-    if(directed == T) { directed <- 1 } # use info for directed network
-    if(directed == F) { directed <- 0 } # use info for undirected network}
-    } 
+  } else {
+    if(directed == TRUE) { directed <- 1 } # use info for directed network
+    if(directed == FALSE) { directed <- 0 } # use info for undirected network}
+  } 
   if(any(A > 1)) { weighted <- 1 }      # identify weighted networks
   if(!any(A > 1)) { weighted <- 0 }     # identify weighted networks
   
@@ -79,7 +96,7 @@ cpProfile <- function(net.object, directed = NULL) {
   # compute Markov asymptotic distribution (x)
   cat('Computing Markov chain asymptotic distribution...')
   
-  if(directed == T) {
+  if(directed == TRUE) {
     AAA <- diag(N) - t(P)
     # A[N,,drop = FALSE] = 1
     AAA <- as.matrix(AAA)
@@ -120,8 +137,6 @@ cpProfile <- function(net.object, directed = NULL) {
   # smallest increase in the pers. prob. of the periphery
   x_sum <- sum(x[periph])
   xP_sum <- sum(sum(xP[periph,periph]))
-  #s_sum <- k_out[periph]
-  #w_sum <- 0
   
   for (i in 2:(N-1)) {
     
@@ -139,8 +154,8 @@ cpProfile <- function(net.object, directed = NULL) {
                      xP[core[j],core[j]]) / (x_sum + x[core[j]])
     }
     
-    colnames(utest) <- 1:ncol(utest)
-    uuu <- utest[,order(utest[1,])]
+    try(colnames(utest) <- 1:ncol(utest), silent = TRUE)
+    try(uuu <- utest[,order(utest[1,])], silent = TRUE)
     jjj <- as.numeric(names(uuu))
     alpha_tmp[i] <- uuu[1]
     
@@ -158,7 +173,7 @@ cpProfile <- function(net.object, directed = NULL) {
     core <- setdiff(1:N, periph)
     x_sum <- sum(x[periph])
     xP_sum <- sum(sum(xP[periph,periph]))
-    }
+  }
   
   # final step: the current periphery eventually includes the whole network
   alpha_tmp[N] <- 1
@@ -179,6 +194,4 @@ cpProfile <- function(net.object, directed = NULL) {
   # return list with alpha_i and C 
   cp_profile <- list(alpha = alpha, C = C)
   return(cp_profile)
-  }
-
-
+}
